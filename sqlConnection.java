@@ -25,11 +25,8 @@ public class sqlConnection {
                 System.out.println("6. Delete a product");
                 System.out.println("100. Exit");
                 int choice = scanner.nextInt();
-    
-                String selectQuery;
-                ResultSet resultSet;
-                Statement statement;
-                PreparedStatement preparedStatement;
+                scanner.nextLine(); // Consume the leftover newline character
+
                 ArrayList<Integer> IDs = new ArrayList<>();
     
     
@@ -73,16 +70,16 @@ public class sqlConnection {
                     boolean continueLoop = true;
                     while (continueLoop) { 
                         System.out.println("Enter the ingredient id that you would like to add to the product: ");
-                        System.out.println("50. Create new ingredient");
-                        System.out.println("100. Exit");
+                        System.out.println("1. Create new ingredient");
+                        System.out.println("2. Exit");
                         int ingredientId = scanner.nextInt();
-                        if (ingredientId == 50){
+                        if (ingredientId == 1){
                             System.out.println("Enter the new ingredient name: ");
                             String ingredientName = scanner.next();
 
                             insertIngredient(connection, ingredientName);
                         }
-                        else if (ingredientId == 100) {
+                        else if (ingredientId == 2) {
                             continueLoop = false;
                         }
                         else {
@@ -123,30 +120,70 @@ public class sqlConnection {
                     boolean continueLoop = true;
                     while (continueLoop) {
                         System.out.println("Enter an ID, if it exists it will be removed if not it will be added: ");
-                        System.out.println("50. Print current ingredients");
-                        System.out.println("75. Print all possible ingredients");
-                        System.out.println("100. exit");
+                        System.out.println("1. Print current ingredients");
+                        System.out.println("2. Print all possible ingredients");
+                        System.out.println("3. Create and add new ingredient");
+                        System.out.println("4. exit");
+                        int ingredientId = scanner.nextInt();
+
+                        if (ingredientId == 1) {
+                            printIngredients(connection, IDs);
+                        }
+                        else if (ingredientId == 2) {
+                            printAllIngredients(connection);
+                        }
+                        else if (ingredientId == 3) {
+                            System.out.println("Enter the new ingredient name: ");
+                            String ingredientName = scanner.next();
+
+                            ingredientId = insertIngredient(connection, ingredientName);
+
+                            updateProduct(connection, id, ingredientId);
+                        }
+                        else if (ingredientId == 4) {
+                            continueLoop = false;
+                        }
+                        else {
+                            boolean exists2 = productIDExists(connection, id);
+                            while (!exists2) {
+                                System.out.println("Ingredient does not exist");
+                                ingredientId = scanner.nextInt();
+                                exists2 = productIDExists(connection, id);
+                            }
+                            // check if the id is in the list of ids
+                            if (IDs.contains(ingredientId)) {
+                                IDs.remove(Integer.valueOf(ingredientId));
+                                deleteIngredient(connection, id, ingredientId);
+                            } else {
+                                IDs.add(ingredientId);
+                                updateProduct(connection, id, ingredientId);
+                            }
+                        }
+
                     }
-
-
-
-                    // select ingredients - check if ingredient exists, if not, add it to the database
-                    // update the product in the database
-                    // update the ingredients in the product_ingredients table
                 }
                 else if (choice == 6) {
                     // delete a product - provide id
+                    printAllProducts(connection);
+                    System.out.println("What is the id of the product you want to delete?");
+                    int id = scanner.nextInt();
+                    boolean exists = productIDExists(connection, id);
+                    while (!exists) {
+                        productIDExists(connection, id);
+                        System.out.println("Product doesn't exist, enter a new ID");
+                        id = scanner.nextInt();
+                    }
 
-                    // delete a product - provide id
-                    // delete the product from the database
-                    // delete the ingredients from the product_ingredients table
+                    deleteProduct(connection, id);
                 }
                 else {
                     System.out.println("Connection Closed!");
                     break;
                 }
-                scanner.next();
+                System.out.println("Press Enter to continue...");
+                scanner.nextLine(); // Wait for the user to press Enter
             }
+            scanner.close();
         } catch (SQLException e) {
             System.out.println("Connection failed!");
             e.printStackTrace();
@@ -185,7 +222,7 @@ public class sqlConnection {
         return id;
     }
 
-    public static void insertIngredient(Connection c, String name) throws SQLException {
+    public static int insertIngredient(Connection c, String name) throws SQLException {
         String insertQuery = "INSERT INTO ingredients (IngredientID, IngredientName) VALUES (?, ?)";
         PreparedStatement preparedStatement = c.prepareStatement(insertQuery);
 
@@ -200,6 +237,8 @@ public class sqlConnection {
         preparedStatement.setInt(1, id);
         preparedStatement.setString(2, name);
         preparedStatement.executeUpdate();
+
+        return id;
     }
 
     public static void insertProductIngredient(Connection c, int productID, ArrayList ingredientID) throws SQLException {
@@ -289,7 +328,33 @@ public class sqlConnection {
         return rs.next();
     }
 
-    public static void updateProduct(Connection c, int id) throws SQLException {
-
+    public static void updateProduct(Connection c, int productID, int ingredientID) throws SQLException {
+        String updateQuery = "UPDATE product_ingredients SET IngredientID = ? WHERE ProductID = ?";
+        PreparedStatement preparedStatement = c.prepareStatement(updateQuery);
+        preparedStatement.setInt(1, ingredientID);
+        preparedStatement.setInt(2, productID);
+        preparedStatement.executeUpdate();
     }
+
+    public static void deleteIngredient(Connection c, int productID, int ingredientID) throws SQLException {
+        String deleteQuery = "DELETE FROM product_ingredients WHERE ProductID = ? AND IngredientID = ?";
+        PreparedStatement preparedStatement = c.prepareStatement(deleteQuery);
+        preparedStatement.setInt(1, productID);
+        preparedStatement.setInt(2, ingredientID);
+        preparedStatement.executeUpdate();
+    }
+
+    // delete a products ingredients from the product_ingredients table and then delete the product from the products table
+    public static void deleteProduct(Connection c, int productID) throws SQLException {
+        String deleteQuery = "DELETE FROM product_ingredients WHERE ProductID = ?";
+        PreparedStatement preparedStatement = c.prepareStatement(deleteQuery);
+        preparedStatement.setInt(1, productID);
+        preparedStatement.executeUpdate();
+
+        // delete the product from the products table
+        deleteQuery = "DELETE FROM products WHERE ProductID = ?";
+        preparedStatement = c.prepareStatement(deleteQuery);
+        preparedStatement.setInt(1, productID);
+        preparedStatement.executeUpdate();
+    }   
 }
