@@ -10,7 +10,6 @@ public class sqlConnection {
         String password = "";
 
 
-
         try (Connection connection = DriverManager.getConnection(url, user, password)) {
             System.out.println("Connection successful!");
             Scanner scanner = new Scanner(System.in);

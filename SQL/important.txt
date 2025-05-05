@@ -1,0 +1,4 @@
+javac -cp "lib/*" -d bin sqlConnection.java
+java -cp "bin;lib/*" sqlConnection
+
+supabase database password = Ce6SHNtuMgASNT8A

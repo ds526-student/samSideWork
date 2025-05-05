@@ -1,2 +1,0 @@
-javac -cp "lib/*" -d bin sqlConnection.java
-java -cp "bin;lib/*" sqlConnection
