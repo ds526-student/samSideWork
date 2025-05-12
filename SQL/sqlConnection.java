@@ -239,6 +239,14 @@ public class sqlConnection {
 
         return id;
     }
+    
+    public static boolean ingredientExists(Connection c, int id) throws SQLException {
+        String selectQuery = "SELECT * FROM ingredients WHERE IngredientID = ?";
+        PreparedStatement preparedStatement = c.prepareStatement(selectQuery);
+        preparedStatement.setInt(1, id);
+        ResultSet rs = preparedStatement.executeQuery();
+        return rs.next();
+    }
 
     public static void insertProductIngredient(Connection c, int productID, ArrayList ingredientID) throws SQLException {
         String insertQuery = "INSERT INTO product_ingredients (ProductID, IngredientID) VALUES (?, ?)";
@@ -317,14 +325,6 @@ public class sqlConnection {
             System.out.println("Paper Two: " + paperTwo);
             System.out.println("Paper Three: " + paperThree);
         }
-    }
-
-    public static boolean ingredientExists(Connection c, int id) throws SQLException {
-        String selectQuery = "SELECT * FROM ingredients WHERE IngredientID = ?";
-        PreparedStatement preparedStatement = c.prepareStatement(selectQuery);
-        preparedStatement.setInt(1, id);
-        ResultSet rs = preparedStatement.executeQuery();
-        return rs.next();
     }
 
     public static void updateProduct(Connection c, int productID, int ingredientID) throws SQLException {
